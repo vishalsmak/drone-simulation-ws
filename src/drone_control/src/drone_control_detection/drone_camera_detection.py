@@ -8,7 +8,7 @@ from sensor_msgs.msg import Range
 import rospy, cv2, cv_bridge
 import numpy as np
 import cv2.aruco as aruco
-import numpy
+import numpy, sys, time, math
 
 # --- Define Tag
 id_to_find = 50
@@ -141,3 +141,6 @@ class DroneCameraDetection:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             cv2.destroyAllWindows()
+
+
+
