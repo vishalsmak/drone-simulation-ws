@@ -36,9 +36,10 @@ def main(msg):
     # --- Get the camera calibration path
     twist = Twist()
     calib_path = ""
-    camera_matrix = np.loadtxt("/home/vishal/vishal_testing/ws_drone/src/drone_control/src/cameraMatrix.txt",
+    camera_matrix = np.loadtxt("/home/vishal/vishal_testing/drone-simulation-ws/src/drone_control/src/cameraMatrix.txt",
                                delimiter=',')
-    camera_distortion = np.loadtxt('/home/vishal/vishal_testing/ws_drone/src/drone_control/src/cameraDistortion.txt',
+    camera_distortion = np.loadtxt('/home/vishal/vishal_testing/drone-simulation-ws/src/drone_control/src'
+                                   '/cameraDistortion.txt',
                                    delimiter=',')
 
     # --- 180 deg rotation matrix around the x axis
