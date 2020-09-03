@@ -19,6 +19,7 @@ height_speed = 0.3  # How fast the drone go up
 desired_height = 1.2
 take_off = "true"
 
+
 class DroneCameraDetection:
 
     def __init__(self):
@@ -42,7 +43,7 @@ class DroneCameraDetection:
         self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
         self.parameters = aruco.DetectorParameters_create()
 
-        # --- Capture the videocamera (this may also be a video or a picture)
+        # --- Capture the camera video (this may also be a video or a picture)
         self.capture = cv_bridge.CvBridge()
 
         # -- Font for the text in the image
