@@ -1,0 +1,2 @@
+geometry_msgs/Point cartesianLocation
+bool isVisible

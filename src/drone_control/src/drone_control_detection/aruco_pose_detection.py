@@ -81,6 +81,7 @@ class ArucoSingleTracker():
         self._loop = False
 
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
+        self._tag_location_pub = rospy.Publisher('land', String, queue_size=1)
 
     def _rotationMatrixToEulerAngles(self, R):
         # Calculates rotation matrix to euler angles
