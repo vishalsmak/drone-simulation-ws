@@ -1,0 +1,53 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.pyc
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build folders
+
+#Ros ignores
+.catkin_workspace
+build/
+devel/
+install/
+
+# clion ide ignores
+cmake-build-debug/
+.idea/
+
+src/CMakeLists\.txt
+
+cmake-build-debug/
+
+cmake-build-release/
+
+
