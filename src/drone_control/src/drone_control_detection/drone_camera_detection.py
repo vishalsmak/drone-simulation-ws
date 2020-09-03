@@ -8,7 +8,8 @@ from sensor_msgs.msg import Range
 import rospy, cv2, cv_bridge
 import numpy as np
 import cv2.aruco as aruco
-import numpy, sys, time, math
+import numpy
+from drone_control.msg import TagLocation
 
 # --- Define Tag
 id_to_find = 50

@@ -34,6 +34,7 @@ import sys, time, math
 import rospy
 
 from sensor_msgs.msg import Image
+from drone_control.msg import TagLocation
 
 
 class ArucoSingleTracker():
@@ -78,10 +79,10 @@ class ArucoSingleTracker():
 
         # -- funtion parameters
         self._verbose = True
-        self._loop = False
+        self._publish = True
 
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
-        self._tag_location_pub = rospy.Publisher('land', String, queue_size=1)
+        self._tag_location_pub = rospy.Publisher('/location/tag', TagLocation, queue_size=1)
 
     def _rotationMatrixToEulerAngles(self, R):
         # Calculates rotation matrix to euler angles
@@ -219,4 +220,11 @@ class ArucoSingleTracker():
                 if key == ord('q'):
                     cv2.destroyAllWindows()
 
-            if not self._loop: return marker_found, x, y, z
+            if self._publish:
+                msg = TagLocation()
+                msg.isVisible = marker_found
+                msg.cartesianLocation.x = x
+                msg.cartesianLocation.y = y
+                msg.cartesianLocation.z = z
+                self._tag_location_pub.publish(msg)
+                return marker_found, x, y, z
