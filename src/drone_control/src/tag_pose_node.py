@@ -13,7 +13,7 @@ if __name__ == "__main__":
     calib_path = "/home/vishal/vishal_testing/drone-simulation-ws/src/drone_control/src/"
     camera_matrix = np.loadtxt(calib_path + 'cameraMatrix.txt', delimiter=',')
     camera_distortion = np.loadtxt(calib_path + 'cameraDistortion.txt', delimiter=',')
-    aruco_tracker = ArucoSingleTracker(id_to_find=50, marker_size=10, show_video=True, camera_matrix=camera_matrix,
+    aruco_tracker = ArucoPoseDetection(id_to_find=50, marker_size=10, show_video=True, camera_matrix=camera_matrix,
                                        camera_distortion=camera_distortion)
 
     rospy.spin()

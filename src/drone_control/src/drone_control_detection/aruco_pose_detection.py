@@ -37,7 +37,7 @@ from sensor_msgs.msg import Image
 from drone_control.msg import TagLocation
 
 
-class ArucoSingleTracker():
+class ArucoPoseDetection():
     def __init__(self,
                  id_to_find,
                  marker_size,
@@ -83,6 +83,7 @@ class ArucoSingleTracker():
 
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
         self._tag_location_pub = rospy.Publisher('/location/tag', TagLocation, queue_size=1)
+        self._camera_location_pub = rospy.Publisher('/location/camera', TagLocation, queue_size=1)
 
     def _rotationMatrixToEulerAngles(self, R):
         # Calculates rotation matrix to euler angles
@@ -132,6 +133,7 @@ class ArucoSingleTracker():
 
         marker_found = False
         x = y = z = 0
+        x_cam = y_cam = z_cam = 0
 
         if not self._kill:
 
@@ -180,6 +182,9 @@ class ArucoSingleTracker():
 
                 # -- Now get Position and attitude f the camera respect to the marker
                 pos_camera = -R_tc * np.matrix(tvec).T
+                x_cam = pos_camera[0]
+                y_cam = pos_camera[1]
+                z_cam = pos_camera[2]
 
                 # print "Camera X = %.1f  Y = %.1f  Z = %.1f  - fps = %.0f"%(pos_camera[0], pos_camera[1], pos_camera[2],fps_detect)
                 if self._verbose: print "Marker X = %.1f  Y = %.1f  Z = %.1f  - fps = %.0f" % (
@@ -197,7 +202,7 @@ class ArucoSingleTracker():
                     cv2.putText(frame, str_attitude, (0, 150), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
                     str_position = "CAMERA Position x=%4.0f  y=%4.0f  z=%4.0f" % (
-                        pos_camera[0], pos_camera[1], pos_camera[2])
+                        x_cam, y_cam, z_cam)
                     cv2.putText(frame, str_position, (0, 200), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
                     # -- Get the attitude of the camera respect to the frame
@@ -221,10 +226,17 @@ class ArucoSingleTracker():
                     cv2.destroyAllWindows()
 
             if self._publish:
-                msg = TagLocation()
-                msg.isVisible = marker_found
-                msg.cartesianLocation.x = x
-                msg.cartesianLocation.y = y
-                msg.cartesianLocation.z = z
-                self._tag_location_pub.publish(msg)
+                msg_tag_location = TagLocation()
+                msg_tag_location.isVisible = marker_found
+                msg_tag_location.cartesianLocation.x = 0
+                msg_tag_location.cartesianLocation.y = 0
+                msg_tag_location.cartesianLocation.z = 0
+
+                msg_camera_location = TagLocation()
+                msg_camera_location.isVisible = marker_found
+                msg_tag_location.cartesianLocation.x = x_cam
+                msg_tag_location.cartesianLocation.y = y_cam
+                msg_tag_location.cartesianLocation.z = z_cam
+                self._camera_location_pub.publish(msg_camera_location)
+                self._tag_location_pub.publish(msg_tag_location)
                 return marker_found, x, y, z
