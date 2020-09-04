@@ -5,7 +5,7 @@ import roslib
 roslib.load_manifest('visualization_marker_tutorials')
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
-from drone_control.msg import TagLocation
+from drone_control.msg import MarkerPosition
 import rospy
 
 topic = 'visualization_marker_array'
@@ -14,24 +14,24 @@ cam_x = cam_y = cam_z = tag_x = tag_y = tag_z = 0
 
 def point_copy_tag(message):
     global tag_x, tag_y, tag_z
-    message = TagLocation()
-    tag_x = message.cartesianLocation.x
-    tag_y = message.cartesianLocation.y
-    tag_z = message.cartesianLocation.z
+    message = MarkerPosition()
+    tag_x = message.position.position.x
+    tag_y = message.position.position.y
+    tag_z = message.position.position.z
 
 
 def point_copy_cam(message):
     global cam_x, cam_y, cam_z
-    message = TagLocation()
-    cam_x = message.cartesianLocation.x
-    cam_y = message.cartesianLocation.y
-    cam_z = message.cartesianLocation.z
+    message = MarkerPosition()
+    cam_x = message.position.position.x
+    cam_y = message.position.position.y
+    cam_z = message.position.position.z
 
 
 rospy.init_node('register')
 publisher = rospy.Publisher(topic, Marker, queue_size=10)
-_tag_location_sub = rospy.Subscriber('/location/tag', TagLocation, queue_size=1, callback=point_copy_tag)
-_camera_location_sub = rospy.Subscriber('/location/camera', TagLocation, queue_size=1, callback=point_copy_cam)
+_tag_location_sub = rospy.Subscriber('/location/tag', MarkerPosition, queue_size=1, callback=point_copy_tag)
+_camera_location_sub = rospy.Subscriber('/location/camera', MarkerPosition, queue_size=1, callback=point_copy_cam)
 
 
 count = 0

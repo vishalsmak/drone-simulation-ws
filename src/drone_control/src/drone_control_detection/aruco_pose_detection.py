@@ -32,9 +32,9 @@ import cv2, cv_bridge
 import cv2.aruco as aruco
 import sys, time, math
 import rospy
-
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from sensor_msgs.msg import Image
-from drone_control.msg import TagLocation
+from drone_control.msg import MarkerPosition
 
 
 class ArucoPoseDetection():
@@ -82,8 +82,8 @@ class ArucoPoseDetection():
         self._publish = True
 
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
-        self._tag_location_pub = rospy.Publisher('/location/tag', TagLocation, queue_size=1)
-        self._camera_location_pub = rospy.Publisher('/location/camera', TagLocation, queue_size=1)
+        self._tag_location_pub = rospy.Publisher('/location/tag', MarkerPosition, queue_size=1)
+        self._camera_location_pub = rospy.Publisher('/location/camera', MarkerPosition, queue_size=1)
 
     def _rotationMatrixToEulerAngles(self, R):
         # Calculates rotation matrix to euler angles
@@ -130,7 +130,7 @@ class ArucoPoseDetection():
     def track(self, message):
 
         self._kill = False
-
+        quaternion = []
         marker_found = False
         x = y = z = 0
         x_cam = y_cam = z_cam = 0
@@ -211,6 +211,8 @@ class ArucoPoseDetection():
                         math.degrees(roll_camera), math.degrees(pitch_camera),
                         math.degrees(yaw_camera))
                     cv2.putText(frame, str_attitude, (0, 250), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                    quaternion = quaternion_from_euler(math.degrees(roll_camera), math.degrees(pitch_camera), math.degrees(yaw_camera))
+
 
 
             else:
@@ -226,17 +228,26 @@ class ArucoPoseDetection():
                     cv2.destroyAllWindows()
 
             if self._publish:
-                msg_tag_location = TagLocation()
-                msg_tag_location.isVisible = marker_found
-                msg_tag_location.cartesianLocation.x = 0
-                msg_tag_location.cartesianLocation.y = 0
-                msg_tag_location.cartesianLocation.z = 0
-
-                msg_camera_location = TagLocation()
-                msg_camera_location.isVisible = marker_found
-                msg_tag_location.cartesianLocation.x = x_cam
-                msg_tag_location.cartesianLocation.y = y_cam
-                msg_tag_location.cartesianLocation.z = z_cam
-                self._camera_location_pub.publish(msg_camera_location)
+                msg_tag_location = MarkerPosition()
+                msg_tag_location.isTagVisible = marker_found
+                msg_tag_location.position.position.x = 0
+                msg_tag_location.position.position.y = 0
+                msg_tag_location.position.position.z = 0
+                msg_tag_location.position.orientation.x = 0
+                msg_tag_location.position.orientation.y = 0
+                msg_tag_location.position.orientation.z = 0
+                msg_tag_location.position.orientation.w = 0
                 self._tag_location_pub.publish(msg_tag_location)
+
+                msg_camera_location = MarkerPosition()
+                msg_camera_location.isTagVisible = marker_found
+                msg_camera_location.position.position.x = x_cam
+                msg_camera_location.position.position.y = y_cam
+                msg_camera_location.position.position.z = z_cam
+                msg_camera_location.position.orientation.x = quaternion[0]
+                msg_camera_location.position.orientation.y = quaternion[1]
+                msg_camera_location.position.orientation.z = quaternion[2]
+                msg_camera_location.position.orientation.w = quaternion[3]
+                self._camera_location_pub.publish(msg_camera_location)
+
                 return marker_found, x, y, z
