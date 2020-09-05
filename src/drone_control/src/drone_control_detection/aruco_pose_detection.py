@@ -37,7 +37,7 @@ from sensor_msgs.msg import Image
 from drone_control.msg import MarkerPosition
 
 
-class ArucoPoseDetection():
+class ArucoPoseDetection:
     def __init__(self,
                  id_to_find,
                  marker_size,
