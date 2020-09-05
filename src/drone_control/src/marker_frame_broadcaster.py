@@ -25,7 +25,7 @@ def main():
 
         translation = (x, y, 0.0)
 
-        b.sendTransform(translation, rotation, Time.now(), 'marker_frame', '/world')
+        b.sendTransform(translation, rotation, Time.now(), '/world', 'marker_frame')
         rate.sleep()
 
 

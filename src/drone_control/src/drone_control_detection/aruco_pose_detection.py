@@ -81,6 +81,8 @@ class ArucoPoseDetection():
         self._verbose = True
         self._publish = True
 
+        self._quaternion = [0] * 4
+
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
         self._tag_location_pub = rospy.Publisher('/location/tag', MarkerPosition, queue_size=1)
         self._camera_location_pub = rospy.Publisher('/location/camera', MarkerPosition, queue_size=1)
@@ -130,7 +132,7 @@ class ArucoPoseDetection():
     def track(self, message):
 
         self._kill = False
-        quaternion = []
+
         marker_found = False
         x = y = z = 0
         x_cam = y_cam = z_cam = 0
@@ -211,7 +213,7 @@ class ArucoPoseDetection():
                         math.degrees(roll_camera), math.degrees(pitch_camera),
                         math.degrees(yaw_camera))
                     cv2.putText(frame, str_attitude, (0, 250), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-                    quaternion = quaternion_from_euler(math.degrees(roll_camera), math.degrees(pitch_camera), math.degrees(yaw_camera))
+                    self._quaternion = quaternion_from_euler(math.degrees(roll_camera), math.degrees(pitch_camera), math.degrees(yaw_camera))
 
 
 
@@ -244,10 +246,10 @@ class ArucoPoseDetection():
                 msg_camera_location.position.position.x = x_cam
                 msg_camera_location.position.position.y = y_cam
                 msg_camera_location.position.position.z = z_cam
-                msg_camera_location.position.orientation.x = quaternion[0]
-                msg_camera_location.position.orientation.y = quaternion[1]
-                msg_camera_location.position.orientation.z = quaternion[2]
-                msg_camera_location.position.orientation.w = quaternion[3]
+                msg_camera_location.position.orientation.x = self._quaternion[0]
+                msg_camera_location.position.orientation.y = self._quaternion[1]
+                msg_camera_location.position.orientation.z = self._quaternion[2]
+                msg_camera_location.position.orientation.w = self._quaternion[3]
                 self._camera_location_pub.publish(msg_camera_location)
 
                 return marker_found, x, y, z
