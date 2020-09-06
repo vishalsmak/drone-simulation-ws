@@ -2,5 +2,6 @@
 	
   <include file="$(find drone_gazebo)/launch/drone.launch"/>	
   <node pkg="drone_control" type="tag_pose_node.py" name="tag_pose_node" output="screen" launch-prefix="xterm -e"> </node>
+  <node pkg="drone_control" type="marker_frame_broadcaster.py" name="marker_frame_broadcaster"> </node>
 
 </launch>
