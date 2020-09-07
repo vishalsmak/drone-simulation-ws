@@ -14,24 +14,20 @@ class FixedTFBroadcaster:
         self._tag_detect_sub = rospy.Subscriber('/location/tag', MarkerPosition, queue_size=5, callback=self.display_frame)
 
     def display_frame(self, message):
-        # Run this loop at about 10Hz
-        if message.isTagVisible:
-            rospy.sleep(0.1)
-            self.x += 1
-            if self.x > 3:
-                self.x = 0
-            t = geometry_msgs.msg.TransformStamped()
-            t.header.frame_id = "world"
-            t.header.stamp = rospy.Time.now()
-            t.child_frame_id = "carrot1"
-            t.transform.translation.x = 0.0
-            t.transform.translation.y = self.x
-            t.transform.translation.z = 0.0
 
-            t.transform.rotation.x = 0.0
-            t.transform.rotation.y = 0.0
-            t.transform.rotation.z = 0.0
-            t.transform.rotation.w = 1.0
+        if message.isTagVisible:
+            t = geometry_msgs.msg.TransformStamped()
+            t.header.frame_id = "front_cam_optical_frame"
+            t.header.stamp = rospy.Time.now()
+            t.child_frame_id = "marker_frame"
+            t.transform.translation.x = message.position.position.x
+            t.transform.translation.y = message.position.position.y
+            t.transform.translation.z = message.position.position.z
+
+            t.transform.rotation.x = message.position.orientation.x
+            t.transform.rotation.y = message.position.orientation.y
+            t.transform.rotation.z = message.position.orientation.z
+            t.transform.rotation.w = message.position.orientation.w
 
             tfm = tf2_msgs.msg.TFMessage([t])
             self.pub_tf.publish(tfm)
