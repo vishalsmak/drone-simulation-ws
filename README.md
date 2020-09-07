@@ -1,4 +1,6 @@
-roslaunch drone_gazebo drone.launch
+sudo apt install ros-melodic-aruco-detect
+
+roslaunch drone_control transforms.launch
 
 rosservice call /enable_motors "enable: true"
 

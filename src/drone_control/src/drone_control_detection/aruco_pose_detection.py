@@ -1,45 +1,40 @@
 #!/usr/bin/env python
 
+"""
+This demo calculates multiple things for different scenarios.
+IF RUNNING ON A PI, BE SURE TO sudo modprobe bcm2835-v4l2
+Here are the defined reference frames:
+TAG:
+                A y
+                |
+                |
+                |tag center
+                O---------> x
+CAMERA:
+                X--------> x
+                | frame center
+                |
+                |
+                V y
+F1: Flipped (180 deg) tag frame around x axis
+F2: Flipped (180 deg) camera frame around x axis
+The attitude of a generic frame 2 respect to a frame 1 can obtained by calculating euler(R_21.T)
+We are going to obtain the following quantities:
+    > from aruco library we obtain tvec and Rct, position of the tag in camera frame and attitude of the tag
+    > position of the Camera in Tag axis: -R_ct.T*tvec
+    > Transformation of the camera, respect to f1 (the tag flipped frame): R_cf1 = R_ct*R_tf1 = R_cf*R_f
+    > Transformation of the tag, respect to f2 (the camera flipped frame): R_tf2 = Rtc*R_cf2 = R_tc*R_f
+    > R_tf1 = R_cf2 an symmetric = R_f
+"""
+
 import numpy as np
 import cv2, cv_bridge
 import cv2.aruco as aruco
 import sys, time, math
 import rospy
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from sensor_msgs.msg import Image
 from drone_control.msg import MarkerPosition
-from tf.transformations import quaternion_from_euler
-from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Range
-
-
-def _rotation_matrix_to_euler_angles(R):
-    # Calculates rotation matrix to euler angles
-    # The result is the same as MATLAB except the order
-    # of the euler angles ( x and z are swapped ).
-
-    def is_rotation_matrix(R):
-        Rt = np.transpose(R)
-        shouldBeIdentity = np.dot(Rt, R)
-        I = np.identity(3, dtype=R.dtype)
-        n = np.linalg.norm(I - shouldBeIdentity)
-        return n < 1e-6
-
-    assert (is_rotation_matrix(R))
-
-    sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-
-    singular = sy < 1e-6
-
-    if not singular:
-        x = math.atan2(R[2, 1], R[2, 2])
-        y = math.atan2(-R[2, 0], sy)
-        z = math.atan2(R[1, 0], R[0, 0])
-    else:
-        x = math.atan2(-R[1, 2], R[1, 1])
-        y = math.atan2(-R[2, 0], sy)
-        z = 0
-
-    return np.array([x, y, z])
 
 
 class ArucoPoseDetection:
@@ -86,16 +81,40 @@ class ArucoPoseDetection:
         self._verbose = True
         self._publish = True
 
-        self._height = 0
-
         self._quaternion = [0] * 4
-        self._q = [0] * 4
 
         self._camera_image_sub = rospy.Subscriber('/bottom/camera/image', Image, queue_size=5, callback=self.track)
-        self._sonar_height_sub = rospy.Subscriber('/sonar_height', Range, queue_size=5, callback=self.height_callback)
         self._tag_location_pub = rospy.Publisher('/location/tag', MarkerPosition, queue_size=1)
         self._camera_location_pub = rospy.Publisher('/location/camera', MarkerPosition, queue_size=1)
-        self._command_velocity_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+
+    def _rotationMatrixToEulerAngles(self, R):
+        # Calculates rotation matrix to euler angles
+        # The result is the same as MATLAB except the order
+        # of the euler angles ( x and z are swapped ).
+
+        def isRotationMatrix(R):
+            Rt = np.transpose(R)
+            shouldBeIdentity = np.dot(Rt, R)
+            I = np.identity(3, dtype=R.dtype)
+            n = np.linalg.norm(I - shouldBeIdentity)
+            return n < 1e-6
+
+        assert (isRotationMatrix(R))
+
+        sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
+
+        singular = sy < 1e-6
+
+        if not singular:
+            x = math.atan2(R[2, 1], R[2, 2])
+            y = math.atan2(-R[2, 0], sy)
+            z = math.atan2(R[1, 0], R[0, 0])
+        else:
+            x = math.atan2(-R[1, 2], R[1, 1])
+            y = math.atan2(-R[2, 0], sy)
+            z = 0
+
+        return np.array([x, y, z])
 
     def _update_fps_read(self):
         t = time.time()
@@ -107,50 +126,8 @@ class ArucoPoseDetection:
         self.fps_detect = 1.0 / (t - self._t_detect)
         self._t_detect = t
 
-    def height_callback(self, message):
-        self._height = message.range
-
     def stop(self):
         self._kill = True
-
-    def temporary_land(self, image, corners):
-
-        # -- point detection logic (may not be used)
-        marker = cv2.rectangle(image, (corners[0][0][1][0], corners[0][0][1][1]),
-                               (corners[0][0][3][0], corners[0][0][3][1]), (45, 255, 90), -1)
-
-        hsv = cv2.cvtColor(marker, cv2.COLOR_BGR2HSV)
-        lower_yellow = np.array([29, 86, 6])
-        upper_yellow = np.array([64, 255, 255])
-        mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-
-        # Calculating the the mask coordinates on marker
-        h, w, d = marker.shape
-        top_search = 3
-        bottom_search = top_search + 300
-        mask[0:top_search, 0:w] = 0
-        mask[bottom_search:h, 0:w] = 0
-        M = cv2.moments(mask)
-        twist = Twist()
-
-        if M['m00'] > 0:
-            dx = int(M['m10'] / M['m00'])
-            cy = int(M['m01'] / M['m00'])
-            cv2.circle(marker, (dx, cy), 1, (0, 0, 255), -1)
-
-            # Calculating the error value that how much motors has to rotate
-
-            err_x = dx - w / 2
-            err_y = cy - h / 2
-            twist.linear.x = -float(err_y) / 95
-            twist.angular.z = -float(err_x) / 95
-            twist.linear.z = -0.2
-            if self._height <= 0.5:
-                twist.angular.z = 0
-                twist.linear.x = 0
-                twist.linear.z = -0.5
-                print "landing"
-        self._command_velocity_pub.publish(twist)
 
     def track(self, message):
 
@@ -173,9 +150,9 @@ class ArucoPoseDetection:
 
             # -- Find all the aruco markers in the image
             corners, ids, rejected = aruco.detectMarkers(image=gray, dictionary=self._aruco_dict,
-                                                         parameters=self._parameters,
-                                                         cameraMatrix=self._camera_matrix,
-                                                         distCoeff=self._camera_distortion)
+                                                         parameters=self._parameters)
+                                                         # cameraMatrix=self._camera_matrix,
+                                                         # distCoeff=self._camera_distortion)
 
             if not ids is None and self.id_to_find in ids[0]:
                 marker_found = True
@@ -193,9 +170,7 @@ class ArucoPoseDetection:
                 x = tvec[0]
                 y = tvec[1]
                 z = tvec[2]
-
-                # -- land to check frames
-                self.temporary_land(frame, corners)
+                print(x,y,z)
 
                 # -- Draw the detected marker and put a reference frame over it
                 aruco.drawDetectedMarkers(frame, corners)
@@ -206,8 +181,7 @@ class ArucoPoseDetection:
                 R_tc = R_ct.T
 
                 # -- Get the attitude in terms of euler 321 (Needs to be flipped first)
-                roll_marker, pitch_marker, yaw_marker = _rotation_matrix_to_euler_angles(self._R_flip * R_tc)
-                self._q = quaternion_from_euler(roll_marker, pitch_marker, yaw_marker)
+                roll_marker, pitch_marker, yaw_marker = self._rotationMatrixToEulerAngles(self._R_flip * R_tc)
 
                 # -- Now get Position and attitude f the camera respect to the marker
                 pos_camera = -R_tc * np.matrix(tvec).T
@@ -235,11 +209,12 @@ class ArucoPoseDetection:
                     cv2.putText(frame, str_position, (0, 200), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
                     # -- Get the attitude of the camera respect to the frame
-                    roll_camera, pitch_camera, yaw_camera = _rotation_matrix_to_euler_angles(self._R_flip * R_tc)
+                    roll_camera, pitch_camera, yaw_camera = self._rotationMatrixToEulerAngles(self._R_flip * R_tc)
                     str_attitude = "CAMERA Attitude r=%4.0f  p=%4.0f  y=%4.0f" % (
                         math.degrees(roll_camera), math.degrees(pitch_camera),
                         math.degrees(yaw_camera))
                     cv2.putText(frame, str_attitude, (0, 250), self._font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                    self._quaternion = quaternion_from_euler(math.degrees(roll_camera), math.degrees(pitch_camera), math.degrees(yaw_camera))
 
 
 
@@ -258,13 +233,13 @@ class ArucoPoseDetection:
             if self._publish:
                 msg_tag_location = MarkerPosition()
                 msg_tag_location.isTagVisible = marker_found
-                msg_tag_location.position.position.x = y / 100
-                msg_tag_location.position.position.y = z / 100
-                msg_tag_location.position.position.z = x / 100
+                msg_tag_location.position.position.x = 0
+                msg_tag_location.position.position.y = 0
+                msg_tag_location.position.position.z = 0
                 msg_tag_location.position.orientation.x = 0
                 msg_tag_location.position.orientation.y = 0
                 msg_tag_location.position.orientation.z = 0
-                msg_tag_location.position.orientation.w = 1
+                msg_tag_location.position.orientation.w = 0
                 self._tag_location_pub.publish(msg_tag_location)
 
                 msg_camera_location = MarkerPosition()
