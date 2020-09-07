@@ -95,7 +95,7 @@ class ArucoPoseDetection:
         self._sonar_height_sub = rospy.Subscriber('/sonar_height', Range, queue_size=5, callback=self.height_callback)
         self._tag_location_pub = rospy.Publisher('/location/tag', MarkerPosition, queue_size=1)
         self._camera_location_pub = rospy.Publisher('/location/camera', MarkerPosition, queue_size=1)
-        self._command_velocity_pub = rospy.Publisher('/cmd_vel', MarkerPosition, queue_size=1)
+        self._command_velocity_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
     def _update_fps_read(self):
         t = time.time()
