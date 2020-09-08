@@ -12,8 +12,6 @@ puby = rospy.Publisher('plot_y', Float64, queue_size=5)
 pubz = rospy.Publisher('plot_z', Float64, queue_size=5)
 pub_yaw = rospy.Publisher('plot_yaw', Float64, queue_size=5)
 
-# error_pub = rospy.Publisher('pid_error', pid_error, queue_size=5)
-
 
 def pid(data, set_array, state):
     """Run one step of PID.
@@ -56,20 +54,12 @@ def pid(data, set_array, state):
     state['integral'] += error * dt
     state['derivative'] = (error - state['lastError']) / dt
 
-    f = state['p'] * error + state['i'] * \
-        state['integral'] + state['d'] * state['derivative']
+    output = state['p'] * error + state['i'] * \
+             state['integral'] + state['d'] * state['derivative']
 
     state['lastError'] = error
     state['last_time'] = current_time
 
-    twist = Twist()
-    f = np.clip(f, -0.5, 0.5)
+    output = np.clip(output, -1, 1)
 
-    # converting from world frame to drone frame
-    # twist.linear.x = (f[0] * np.cos(error[3])) - (f[1] * np.sin(error[3]))
-    # twist.linear.y = (f[1] * np.cos(error[3])) + (f[0] * np.sin(error[3]))
-    twist.linear.x = f[0]
-    twist.linear.y = f[1]
-    twist.linear.z = -f[2]
-    twist.angular.z = 0
-    return twist, state
+    return output, state
