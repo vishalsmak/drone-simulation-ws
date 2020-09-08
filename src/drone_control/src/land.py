@@ -5,7 +5,7 @@ from std_msgs.msg import *
 from geometry_msgs.msg import *
 from tf.transformations import euler_from_quaternion
 import tf2_ros
-from pid import pid
+from helper_functions.pid import pid
 import numpy as np
 import time
 
@@ -51,7 +51,6 @@ if __name__ == '__main__':
             current_pose = np.array([trans.translation.x, trans.translation.y, trans.translation.z, euler_y])
 
             pid_twist, state = pid(current_pose, set_array, state)
-            print(current_pose[2], pid_twist.linear.z)
             if state['lastError'][0] < 0.5 and state['lastError'][1] < 0.5:
                 i += 1
             else:

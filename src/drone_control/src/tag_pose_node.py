@@ -10,7 +10,7 @@ if __name__ == "__main__":
     rospy.init_node('detect_aruco_tag_pose')
 
     # --- Get the camera calibration path
-    calib_path = "/home/melodic/drone-simulation-ws/src/drone_control/src/"
+    calib_path = "/home/vishal/vishal_testing/drone-simulation-ws/src/drone_control/config/"
     camera_matrix = np.loadtxt(calib_path + 'cameraMatrix.txt', delimiter=',')
     camera_distortion = np.loadtxt(calib_path + 'cameraDistortion.txt', delimiter=',')
     aruco_tracker = ArucoPoseDetection(id_to_find=50, marker_size=10, show_video=True, camera_matrix=camera_matrix,

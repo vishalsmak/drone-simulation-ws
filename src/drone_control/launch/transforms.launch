@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <launch>
 
   <include file="$(find drone_gazebo)/launch/drone.launch"/>
   <include file="$(find drone_control)/launch/aruco_detect.launch"/>
-  <node name="marker_broadcast" pkg="drone_control" type="marker_frame_broadcaster.py"/>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find drone_control)/rviz.rviz"/>
+  <node name="marker_broadcast" pkg="drone_control" type="marker_frame_broadcaster_node.py"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find drone_control)/config/rviz.rviz"/>
   <!-- <node name="lander" pkg="drone_control" type="transform_handler.py"  output="screen" /> -->
 
 </launch>
