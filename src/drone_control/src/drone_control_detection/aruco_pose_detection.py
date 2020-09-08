@@ -2,7 +2,6 @@
 
 """
 This demo calculates multiple things for different scenarios.
-IF RUNNING ON A PI, BE SURE TO sudo modprobe bcm2835-v4l2
 Here are the defined reference frames:
 TAG:
                 A y
