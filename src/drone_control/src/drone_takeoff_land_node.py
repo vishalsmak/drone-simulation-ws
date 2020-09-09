@@ -25,9 +25,12 @@ if __name__ == '__main__':
     # initialising variables for PID
 
     translation_pid_factors = [0.8, 0.001, 0.5]
-    state['p'] = np.array([translation_pid_factors[0], translation_pid_factors[0], translation_pid_factors[0]], dtype=float)
-    state['i'] = np.array([translation_pid_factors[1], translation_pid_factors[1], translation_pid_factors[1]], dtype=float)
-    state['d'] = np.array([translation_pid_factors[2], translation_pid_factors[2], translation_pid_factors[2]], dtype=float)
+    state['p'] = np.array([translation_pid_factors[0], translation_pid_factors[0], translation_pid_factors[0]],
+                          dtype=float)
+    state['i'] = np.array([translation_pid_factors[1], translation_pid_factors[1], translation_pid_factors[1]],
+                          dtype=float)
+    state['d'] = np.array([translation_pid_factors[2], translation_pid_factors[2], translation_pid_factors[2]],
+                          dtype=float)
 
     # initialising variables for PID
     state['lastError'] = np.zeros(3)
@@ -44,7 +47,8 @@ if __name__ == '__main__':
         # If the marker is visible switch to land loop
         try:
             trans = tfBuffer.lookup_transform('marker_frame', 'base_link', rospy.Time()).transform
-            (euler_r, euler_p, euler_y) = euler_from_quaternion([trans.rotation.x, trans.rotation.y, trans.rotation.z, trans.rotation.w])
+            (euler_r, euler_p, euler_y) = euler_from_quaternion(
+                [trans.rotation.x, trans.rotation.y, trans.rotation.z, trans.rotation.w])
             current_pose = np.array([trans.translation.x, trans.translation.y, trans.translation.z])
             output, state = pid(current_pose, set_point_array, state)
 

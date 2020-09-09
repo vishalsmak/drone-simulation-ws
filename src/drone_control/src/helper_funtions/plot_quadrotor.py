@@ -1,6 +1,5 @@
 """
 Class for plotting a quadrotor
-Author: Daniel Ingram (daniel-s-ingram)
 """
 
 from math import cos, sin

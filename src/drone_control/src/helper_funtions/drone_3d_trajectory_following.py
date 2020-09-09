@@ -1,6 +1,5 @@
 """
 Simulate a quadrotor following a 3D trajectory
-Author: Daniel Ingram (daniel-s-ingram)
 """
 
 from math import cos, sin
@@ -33,15 +32,12 @@ Kd_y = 10
 Kd_z = 1
 
 
-def quad_sim(x_c, y_c, z_c):
+def quad_run_simulate(x_c, y_c, z_c, x_pos, y_pos, z_pos):
     """
     Calculates the necessary thrust and torques for the quadrotor to
     follow the trajectory described by the sets of coefficients
     x_c, y_c, and z_c.
     """
-    x_pos = -5
-    y_pos = -5
-    z_pos = 5
     x_vel = 0
     y_vel = 0
     z_vel = 0
@@ -64,7 +60,7 @@ def quad_sim(x_c, y_c, z_c):
                   pitch=pitch, yaw=yaw, size=1, show_animation=show_animation)
 
     i = 0
-    n_run = 8
+    n_run = 1
     irun = 0
 
     while True:
@@ -114,10 +110,7 @@ def quad_sim(x_c, y_c, z_c):
             t += dt
 
         t = 0
-        i = (i + 1) % 4
-        irun += 1
-        if irun >= n_run:
-            break
+        break
 
     print("Done")
 
@@ -178,26 +171,3 @@ def rotation_matrix(roll, pitch, yaw):
          [-sin(pitch), cos(pitch) * sin(roll), cos(pitch) * cos(yaw)]
          ])
 
-
-def main():
-    """
-    Calculates the x, y, z coefficients for the four segments
-    of the trajectory
-    """
-    x_coeffs = [[], [], [], []]
-    y_coeffs = [[], [], [], []]
-    z_coeffs = [[], [], [], []]
-    waypoints = [[-5, -5, 5], [5, -5, 5], [5, 5, 5], [-5, 5, 5]]
-
-    for i in range(4):
-        traj = TrajectoryGenerator(waypoints[i], waypoints[(i + 1) % 4], T)
-        traj.solve()
-        x_coeffs[i] = traj.x_c
-        y_coeffs[i] = traj.y_c
-        z_coeffs[i] = traj.z_c
-
-    quad_sim(x_coeffs, y_coeffs, z_coeffs)
-
-
-if __name__ == "__main__":
-    main()
