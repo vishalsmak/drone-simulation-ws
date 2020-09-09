@@ -7,6 +7,7 @@
   <node name="marker_broadcast" pkg="drone_control" type="marker_frame_broadcaster_node.py"/>
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find drone_control)/config/rviz.rviz"/>
   <node name="plot_path" pkg="drone_control" type="plot_path_node.py"/>
+  <node name="drone_takeoff_land" pkg="drone_control" type="drone_takeoff_land_node.py"/>
  
 
 </launch>
